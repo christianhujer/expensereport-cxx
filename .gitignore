@@ -1,1 +1,4 @@
+.idea/
 *.[adios]
+catch.hpp
+test_main

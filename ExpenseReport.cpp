@@ -1,55 +1,76 @@
 #include <chrono>
 #include <iostream>
 #include <iterator>
-#include <list>
+#include "ExpenseReport.h"
 
 using namespace std;
 
-enum Type
-{
-    BREAKFAST, DINNER, CAR_RENTAL
-};
+void printReportHeader(const char *time);
+void printReportBody(list<Expense> &expenses);
+void printDetail(const Expense &expense);
+const char *getOverExpenseLimitMarker(const Expense &expense);
+void printReportSummary(list<Expense> &expenses);
+int sumMealExpenses(list<Expense> &expenses);
+int sumTotalExpenses(list<Expense> &expenses);
 
-class Expense
-{
-    public:
-    Type type;
-    int amount;
-};
+bool isMeal(const Expense &expense);
 
 void printReport(list<Expense> expenses)
 {
-    int total = 0;
-    int mealExpenses = 0;
-
     auto now = chrono::system_clock::to_time_t(chrono::system_clock::now());
-    cout << "Expenses " << ctime(&now) << '\n';
+    const char *time = ctime(&now);
+    printReport(expenses, time);
+}
 
-    for (list<Expense>::iterator expense = expenses.begin(); expense != expenses.end(); ++expense) {
-        if (expense->type == BREAKFAST || expense->type == DINNER) {
-            mealExpenses += expense->amount;
-        }
+void printReport(list<Expense> &expenses, const char *time)
+{
+    printReportHeader(time);
+    printReportBody(expenses);
+    printReportSummary(expenses);
+}
 
-        string expenseName = "";
-        switch (expense->type) {
-        case DINNER:
-            expenseName = "Dinner";
-            break;
-        case BREAKFAST:
-            expenseName = "Breakfast";
-            break;
-        case CAR_RENTAL:
-            expenseName = "Car Rental";
-            break;
-        }
+void printReportHeader(const char *time)
+{
+    cout << "Expenses " << time << '\n';
+}
 
-        string mealOverExpensesMarker = (expense->type == DINNER && expense->amount > 5000) || (expense->type == BREAKFAST && expense->amount > 1000) ? "X" : " ";
+void printReportBody(list<Expense> &expenses)
+{
+    for (auto & expense : expenses)
+        printDetail(expense);
+}
 
-        cout << expenseName << '\t' << expense->amount << '\t' << mealOverExpensesMarker << '\n';
+void printDetail(const Expense &expense)
+{
+    string expenseName = expense.getName();
+    string overExpenseLimitMarker = getOverExpenseLimitMarker(expense);
+    cout << expenseName << '\t' << expense.amount << '\t' << overExpenseLimitMarker << '\n';
+}
 
-        total += expense->amount;
-    }
+const char *getOverExpenseLimitMarker(const Expense &expense)
+{
+    return expense.isOverLimit() ? "X" : " ";
+}
 
-    cout << "Meal expenses: " << mealExpenses << '\n';
-    cout << "Total expenses: " << total << '\n';
+void printReportSummary(list<Expense> &expenses)
+{
+    cout << "Meal expenses: " << sumMealExpenses(expenses) << '\n';
+    cout << "Total expenses: " << sumTotalExpenses(expenses) << '\n';
+}
+
+int sumMealExpenses(list<Expense> &expenses)
+{
+    int mealExpenses = 0;
+    for (auto & expense : expenses)
+        if (expense.isMeal())
+            mealExpenses += expense.amount;
+    return mealExpenses;
+}
+
+int sumTotalExpenses(list<Expense> &expenses)
+{
+    int total = 0;
+    for (auto & expense : expenses)
+        total += expense.amount;
+    return total;
 }
